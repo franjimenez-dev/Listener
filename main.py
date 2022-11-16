@@ -1,5 +1,9 @@
 import os
 from dotenv import load_dotenv
+import time
+
+global vc
+global contexto
 
 load_dotenv()
 
@@ -10,15 +14,17 @@ import nextcord.ext.commands as commands
 import nextcord.ext.voicerecording as voicerecording
 import whisper
 
-model = whisper.load_model("medium")
+model = whisper.load_model("base")
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=nextcord.Intents.all())
 bot.connections = {}
 
 
 async def get_vc(message: nextcord.Message):
     """Finds the corresponding VC to a message user or generates a new one"""
-    vc = message.author.voice
-    if not vc:
+    original_vc = message.author.voice
+    print("this is get_vc")
+    print(original_vc)
+    if not original_vc:
         await message.channel.send("You're not in a vc right now")
         return
     connection = bot.connections.get(message.guild.id)
@@ -26,45 +32,50 @@ async def get_vc(message: nextcord.Message):
         if connection.channel.id == message.author.voice.channel.id:
             return connection
 
-        await connection.move_to(vc.channel)
+        await connection.move_to(original_vc.channel)
         return connection
     else:
-        vc = await vc.channel.connect()
-        bot.connections.update({message.guild.id: vc})
-        return vc
+        original_vc = await original_vc.channel.connect()
+        bot.connections.update({message.guild.id: original_vc})
+        return original_vc
 
 
 async def finished_callback(sink: voicerecording.FileSink, channel, *args):
+    print("on finished callback start")
     # Note: sink.audio_data = {user_id: AudioData}
     recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in
                       sink.audio_data.items()]
+
+    print("antes de enviar el mensaje")
     await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
+    print("despues de enviar el mensaje")
     for f in sink.get_files():
         result = model.transcribe(f, fp16=False)
         await channel.send(result['text'])
+
+    print("antes de destruir el sink")
     sink.destroy()
+    await grabando(contexto, 0, 1000000)
 
 
-@bot.command(name="record", aliases=["start_recording", "start"])
-async def start(ctx: commands.Context, time: int = 0, size: int = 1000000):
-    # please note: There is an upload limit for Files, so it is suggested to have a low enough size
+@bot.command(name="join")
+async def join(ctx: commands.Context, itime: int = 0, size: int = 1000000):
+    global contexto
+    contexto = ctx
+    global vc
     vc = await get_vc(ctx.message)
+
+    await grabando(contexto, itime, size)
+
+
+async def grabando(ctx: commands.Context, itime: int = 0, size: int = 1000000):
     await vc.start_listening(
-        voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': time, 'max_size': size}),
+        voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': itime, 'max_size': size}),
         finished_callback, [ctx.channel])
     await ctx.reply("The recording has started!")
 
-
-@bot.command(name="pause", aliases=["pause_recording", "toggle"])
-async def pause(ctx: commands.Context):
-    vc = await get_vc(ctx.message)
-    await vc.toggle_listening_pause()
-    await ctx.reply(f"The recording has been {'paused' if vc.listening_paused else 'unpaused'}")
-
-
-@bot.command(name="stop", aliases=["stop_recording", "end"])
-async def stop(ctx: commands.Context):
-    vc = await get_vc(ctx.message)
+    print("before sleep 10")
+    time.sleep(12)
     print("stopping")
     await vc.stop_listening()
 
@@ -82,5 +93,5 @@ async def on_voice_state_update(self, member, before, after):
 
 
 if __name__ == '__main__':
-    # voicerecording.cleanuptempdir()
+    voicerecording.cleanuptempdir()
     bot.run(TOKEN)
