@@ -22,8 +22,6 @@ bot.connections = {}
 async def get_vc(message: nextcord.Message):
     """Finds the corresponding VC to a message user or generates a new one"""
     original_vc = message.author.voice
-    print("this is get_vc")
-    print(original_vc)
     if not original_vc:
         await message.channel.send("You're not in a vc right now")
         return
@@ -41,19 +39,15 @@ async def get_vc(message: nextcord.Message):
 
 
 async def finished_callback(sink: voicerecording.FileSink, channel, *args):
-    print("on finished callback start")
     # Note: sink.audio_data = {user_id: AudioData}
     recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in
                       sink.audio_data.items()]
 
-    print("antes de enviar el mensaje")
-    await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
-    print("despues de enviar el mensaje")
+    # await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
     for f in sink.get_files():
         result = model.transcribe(f, fp16=False)
         await channel.send(result['text'])
 
-    print("antes de destruir el sink")
     sink.destroy()
     await grabando(contexto, 0, 1000000)
 
@@ -69,14 +63,14 @@ async def join(ctx: commands.Context, itime: int = 0, size: int = 1000000):
 
 
 async def grabando(ctx: commands.Context, itime: int = 0, size: int = 1000000):
+    print("started")
     await vc.start_listening(
         voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': itime, 'max_size': size}),
         finished_callback, [ctx.channel])
-    await ctx.reply("The recording has started!")
+    # await ctx.reply("The recording has started!")
 
-    print("before sleep 10")
     time.sleep(12)
-    print("stopping")
+    print("stopped")
     await vc.stop_listening()
 
 
