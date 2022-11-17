@@ -14,9 +14,17 @@ import nextcord.ext.commands as commands
 import nextcord.ext.voicerecording as voicerecording
 import whisper
 
-model = whisper.load_model("base")
+model = whisper.load_model("small")
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=nextcord.Intents.all())
 bot.connections = {}
+
+from command_handler import commandHandler
+
+_commandHandler = commandHandler()
+
+
+async def whisper_command_handler(prompt):
+    return await _commandHandler.check_command(prompt, contexto)
 
 
 async def get_vc(message: nextcord.Message):
@@ -42,14 +50,16 @@ async def finished_callback(sink: voicerecording.FileSink, channel, *args):
     # Note: sink.audio_data = {user_id: AudioData}
     recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in
                       sink.audio_data.items()]
-
+    stopListening = False
     # await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
     for f in sink.get_files():
         result = model.transcribe(f, fp16=False)
-        await channel.send(result['text'])
+        # await channel.send(result['text'])
+        stopListening = await whisper_command_handler(result['text'])
 
     sink.destroy()
-    await grabando(contexto, 0, 1000000)
+    if not stopListening:
+        await grabando(contexto, 0, 1000000)
 
 
 @bot.command(name="join")
@@ -60,6 +70,11 @@ async def join(ctx: commands.Context, itime: int = 0, size: int = 1000000):
     vc = await get_vc(ctx.message)
 
     await grabando(contexto, itime, size)
+
+
+@bot.command(name="resume")
+async def resume(ctx: commands.Context):
+    await grabando(ctx, 0, 1000000)
 
 
 async def grabando(ctx: commands.Context, itime: int = 0, size: int = 1000000):
