@@ -3,6 +3,8 @@ import random
 from command_list import command_list
 from animegifs import animegifs
 
+import youtube_dl
+
 
 class commandHandler:
     commandList = []
@@ -43,7 +45,31 @@ class commandHandler:
             return False
 
     def youtube(self, prompt):
-        print("youtube")
+
+        index = prompt.find("youtube")
+        index += len("youtube") + 1
+        prompt = prompt[index:]
+
+        print(prompt)
+
+        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+
+        with ydl:
+            result = ydl.extract_info(
+                f"ytsearch:{prompt}",
+                download=False
+            )
+
+        if 'entries' in result:
+            # Can be a playlist or a list of videos
+            video = result['entries'][0]
+        else:
+            # Just a video
+            video = result
+
+        print(video)
+        video_url = video['formats'][0]['url']
+        print(video_url)
 
     def spotify(self, prompt):
         print("spotify")
