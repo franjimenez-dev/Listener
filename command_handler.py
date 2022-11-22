@@ -27,23 +27,18 @@ class CommandHandler:
                 await self.youtube(prompt)
                 return True
             else:
-                spotify_case = prompt.find("spotify")
-                if spotify_case >= 0:
-                    self.spotify(prompt)
+                cats_case = prompt.find("cats")
+                if cats_case >= 0:
+                    self.cats(ctx)
                     return True
                 else:
-                    cats_case = prompt.find("cats")
-                    if cats_case >= 0:
-                        self.cats(ctx)
+                    anime_case = prompt.find("anime")
+                    if anime_case >= 0:
+                        await self.anime(prompt, ctx)
                         return True
                     else:
-                        anime_case = prompt.find("anime")
-                        if anime_case >= 0:
-                            await self.anime(prompt, ctx)
-                            return True
-                        else:
-                            print("nothing")
-                            return False
+                        print("nothing")
+                        return False
         else:
             print("nothing")
             return False
@@ -56,9 +51,6 @@ class CommandHandler:
 
         player = Player(bot=self.bot, ctx=self.ctx, prompt=prompt)
         await player.stream()
-
-    def spotify(self, prompt):
-        print("spotify")
 
     def cats(self):
         print("cat")
