@@ -1,26 +1,30 @@
+import asyncio
 import random
 
 from command_list import command_list
 from animegifs import animegifs
 
-import youtube_dl
+from youtube import Player
 
 
-class commandHandler:
+class CommandHandler:
     commandList = []
 
-    def __init__(self, ):
+    def __init__(self, bot):
+        self.ctx = None
+        self.bot = bot
         for command in command_list:
             self.commandList.append(command)
 
     async def check_command(self, prompt, ctx):
+        self.ctx = ctx
         prompt = prompt.lower()
         print(prompt)
         if prompt != "":
             youtube_case = prompt.find("youtube")
             print(youtube_case)
             if youtube_case >= 0:
-                self.youtube(prompt)
+                await self.youtube(prompt)
                 return True
             else:
                 spotify_case = prompt.find("spotify")
@@ -44,32 +48,14 @@ class commandHandler:
             print("nothing")
             return False
 
-    def youtube(self, prompt):
+    async def youtube(self, prompt):
 
         index = prompt.find("youtube")
         index += len("youtube") + 1
         prompt = prompt[index:]
 
-        print(prompt)
-
-        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
-
-        with ydl:
-            result = ydl.extract_info(
-                f"ytsearch:{prompt}",
-                download=False
-            )
-
-        if 'entries' in result:
-            # Can be a playlist or a list of videos
-            video = result['entries'][0]
-        else:
-            # Just a video
-            video = result
-
-        print(video)
-        video_url = video['formats'][0]['url']
-        print(video_url)
+        player = Player(bot=self.bot, ctx=self.ctx, prompt=prompt)
+        await player.stream()
 
     def spotify(self, prompt):
         print("spotify")

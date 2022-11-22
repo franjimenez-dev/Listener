@@ -18,9 +18,9 @@ model = whisper.load_model("small")
 bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), intents=nextcord.Intents.all())
 bot.connections = {}
 
-from command_handler import commandHandler
+from command_handler import CommandHandler
 
-_commandHandler = commandHandler()
+_commandHandler = CommandHandler(bot)
 
 
 async def whisper_command_handler(prompt):
@@ -28,7 +28,6 @@ async def whisper_command_handler(prompt):
 
 
 async def get_vc(message: nextcord.Message):
-    """Finds the corresponding VC to a message user or generates a new one"""
     original_vc = message.author.voice
     if not original_vc:
         await message.channel.send("You're not in a vc right now")
@@ -47,14 +46,9 @@ async def get_vc(message: nextcord.Message):
 
 
 async def finished_callback(sink: voicerecording.FileSink, channel, *args):
-    # Note: sink.audio_data = {user_id: AudioData}
-    recorded_users = [f" <@{str(user_id)}> ({os.path.split(audio.file)[1]}) " for user_id, audio in
-                      sink.audio_data.items()]
     stopListening = False
-    # await channel.send(f"Finished! Recorded audio for {', '.join(recorded_users)}.")
     for f in sink.get_files():
         result = model.transcribe(f, fp16=False)
-        # await channel.send(result['text'])
         stopListening = await whisper_command_handler(result['text'])
 
     sink.destroy()
@@ -82,7 +76,6 @@ async def grabando(ctx: commands.Context, itime: int = 0, size: int = 1000000):
     await vc.start_listening(
         voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': itime, 'max_size': size}),
         finished_callback, [ctx.channel])
-    # await ctx.reply("The recording has started!")
 
     time.sleep(12)
     print("stopped")
