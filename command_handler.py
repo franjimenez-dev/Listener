@@ -1,5 +1,6 @@
 import asyncio
 import random
+import requests
 
 from command_list import command_list
 from animegifs import animegifs
@@ -29,12 +30,12 @@ class CommandHandler:
             else:
                 cats_case = prompt.find("cats")
                 if cats_case >= 0:
-                    self.cats(ctx)
+                    await self.cats(ctx)
                     return True
                 else:
                     anime_case = prompt.find("anime")
                     if anime_case >= 0:
-                        await self.anime(prompt, ctx)
+                        await self.anime(ctx)
                         return True
                     else:
                         print("nothing")
@@ -52,10 +53,12 @@ class CommandHandler:
         player = Player(bot=self.bot, ctx=self.ctx, prompt=prompt)
         await player.stream()
 
-    def cats(self):
-        print("cat")
+    async def cats(self,ctx):
+        cat_response = requests.get("https://api.thecatapi.com/v1/images/search?")
+        cat = cat_response.json()
+        await ctx.channel.send(cat[0]['url'])
 
-    async def anime(self, prompt, ctx):
+    async def anime(self, ctx):
         print("weeb")
 
         categories = ["Attack", "Bite", "Bloodsuck", "Blush", "Bonk", "Brofist",
