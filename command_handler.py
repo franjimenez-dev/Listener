@@ -1,6 +1,9 @@
-import asyncio
+import os
 import random
+
+import nextcord
 import requests
+import hashlib
 
 from command_list import command_list
 from animegifs import animegifs
@@ -18,6 +21,9 @@ class CommandHandler:
             self.commandList.append(command)
 
     async def check_command(self, prompt, ctx):
+
+        # Checks command needed from a given prompt-input
+
         self.ctx = ctx
         prompt = prompt.lower()
         print(prompt)
@@ -51,6 +57,9 @@ class CommandHandler:
             return False
 
     async def youtube(self, prompt):
+
+        # Search a vid on YouTube from an input given and plays it on voice channel
+
         index = prompt.find("youtube")
         index += len("youtube") + 1
         prompt = prompt[index:]
@@ -59,11 +68,17 @@ class CommandHandler:
         await player.stream()
 
     async def cats(self,ctx):
+
+        # Displays a random cat image
+
         cat_response = requests.get("https://api.thecatapi.com/v1/images/search?")
         cat = cat_response.json()
         await ctx.channel.send(cat[0]['url'])
 
     async def anime(self, ctx):
+
+        # Displays an anime picture of a random category
+
         categories = ["Attack", "Bite", "Bloodsuck", "Blush", "Bonk", "Brofist",
                       "Cry", "Cuddle", "Dance", "Disgust", "Facedesk", "Facepalm",
                       "Flick", "Flirt", "Handhold", "Happy", "Harass", "Highfive", "Hug",
@@ -76,4 +91,20 @@ class CommandHandler:
         await ctx.channel.send(gif)
 
     async def persona(self, ctx):
-        ctx.send("https://thispersondoesnotexist.com/image")
+
+        # Displays a picture of a person that doest not exists
+
+        picture = requests.get("https://thispersondoesnotexist.com/image",
+                         headers={'User-Agent': 'My User Agent 1.0'}).content
+
+        h = hashlib.new("md5")
+        h.update(picture)
+
+        file = h.hexdigest() + ".jpeg"
+        with open(file, "wb") as f:
+            f.write(picture)
+
+        myfile = nextcord.File(f"./{file}")
+        await ctx.send(file=myfile)
+        os.remove(f"./{file}")
+

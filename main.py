@@ -53,7 +53,7 @@ async def finished_callback(sink: voicerecording.FileSink, channel, *args):
 
     sink.destroy()
     if not stopListening:
-        await grabando(contexto, 0, 1000000)
+        await recording(contexto, 0, 1000000)
 
 
 @bot.command(name="join")
@@ -63,15 +63,15 @@ async def join(ctx: commands.Context, itime: int = 0, size: int = 1000000):
     global vc
     vc = await get_vc(ctx.message)
 
-    await grabando(contexto, itime, size)
+    await recording(contexto, itime, size)
 
 
 @bot.command(name="resume")
 async def resume(ctx: commands.Context):
-    await grabando(ctx, 0, 1000000)
+    await recording(ctx, 0, 1000000)
 
 
-async def grabando(ctx: commands.Context, itime: int = 0, size: int = 1000000):
+async def recording(ctx: commands.Context, itime: int = 0, size: int = 1000000):
     print("started")
     await vc.start_listening(
         voicerecording.FileSink(encoding=voicerecording.wav_encoder, filters={'time': itime, 'max_size': size}),

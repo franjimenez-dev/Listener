@@ -32,16 +32,18 @@ class Player:
         self.prompt = prompt
 
     async def stream(self):
+
+        # Plays music on a voice channel
+
         data = ytdl.extract_info(f"ytsearch:{self.prompt}", download=False)
         if 'entries' in data:
-            # take first item from a playlist
             data = data['entries'][0]
 
         async with self.ctx.typing():
             player = await YTDLSource.from_url(data["webpage_url"], loop=self.bot.loop, stream=True)
             self.ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
 
-        await self.ctx.send(f'Now playing: {player.title}')
+        await self.ctx.send(f'**Now playing:** {player.title}')
 
 
 class YTDLSource(nextcord.PCMVolumeTransformer):
@@ -54,6 +56,9 @@ class YTDLSource(nextcord.PCMVolumeTransformer):
 
     @classmethod
     async def from_url(cls, url, *, loop=None, stream=False):
+
+        # Returns youtube video data from an url
+
         loop = loop or asyncio.get_event_loop()
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
 
