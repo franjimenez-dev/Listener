@@ -1,1 +1,1 @@
-command_list = ["cats", "youtube", "spotify", "anime"]
+command_list = ["youtube", "cats", "anime", "persona"]
