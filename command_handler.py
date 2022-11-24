@@ -38,14 +38,19 @@ class CommandHandler:
                         await self.anime(ctx)
                         return True
                     else:
-                        print("nothing")
-                        return False
+                        persona_case = prompt.find("persona")
+                        if persona_case >= 0:
+                            await self.persona(ctx)
+                            return True
+                        else:
+
+                            print("nothing")
+                            return False
         else:
             print("nothing")
             return False
 
     async def youtube(self, prompt):
-
         index = prompt.find("youtube")
         index += len("youtube") + 1
         prompt = prompt[index:]
@@ -59,8 +64,6 @@ class CommandHandler:
         await ctx.channel.send(cat[0]['url'])
 
     async def anime(self, ctx):
-        print("weeb")
-
         categories = ["Attack", "Bite", "Bloodsuck", "Blush", "Bonk", "Brofist",
                       "Cry", "Cuddle", "Dance", "Disgust", "Facedesk", "Facepalm",
                       "Flick", "Flirt", "Handhold", "Happy", "Harass", "Highfive", "Hug",
@@ -71,3 +74,6 @@ class CommandHandler:
         print(category)
         gif = gifs.get_gif()
         await ctx.channel.send(gif)
+
+    async def persona(self, ctx):
+        ctx.send("https://thispersondoesnotexist.com/image")
